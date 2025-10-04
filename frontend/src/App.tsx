@@ -243,17 +243,17 @@ function App() {
         {/* Interviewer Avatar */}
         <div className={`avatar ${conversationState}`}>
           <div className="avatar-circle">
-            <img src="/interviewer-avatar-2.png" alt="Virtual Biographer Avatar" className="avatar-icon" />
+            <img src="/interviewer-avatar-2.png" alt="Delphina Avatar" className="avatar-icon" />
           </div>
           <div className="pulse-ring"></div>
         </div>
 
         {/* Interviewer Name */}
-        <h1 className="title">Virtual Biographer</h1>
+        <h1 className="title">Hi, I'm Delphina!</h1>
 
         {/* Status Text */}
         <p className="status">
-          {connectionState === 'disconnected' && 'I want to get to know you!'}
+          {connectionState === 'disconnected' && '... and I want to get to know you!'}
           {connectionState === 'connecting' && 'Connecting...'}
           {connectionState === 'connected' && conversationState === 'idle' && 'Interview in progress'}
           {conversationState === 'listening' && 'Listening...'}
