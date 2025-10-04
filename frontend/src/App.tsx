@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import './App.css';
 
 type ConnectionState = 'disconnected' | 'connecting' | 'connected';
@@ -46,16 +46,19 @@ function App() {
   const processAudioQueue = async () => {
     if (isPlayingRef.current || audioQueueRef.current.length === 0) return;
 
+    console.log('🔊 Starting audio playback, queue size:', audioQueueRef.current.length);
     isPlayingRef.current = true;
     setConversationState('speaking');
 
     while (audioQueueRef.current.length > 0) {
       const chunk = audioQueueRef.current.shift();
       if (chunk) {
+        console.log('🔉 Playing chunk, length:', chunk.length);
         await playAudioChunk(chunk);
       }
     }
 
+    console.log('✅ Audio playback complete');
     isPlayingRef.current = false;
     setConversationState('idle');
   };
@@ -64,46 +67,59 @@ function App() {
   const handleWebSocketMessage = (event: MessageEvent) => {
     try {
       const data = JSON.parse(event.data);
+      
+      // Log ALL messages for debugging
+      console.log('📨 Received:', data.type, data);
 
       switch (data.type) {
         case 'session.created':
         case 'session.updated':
-          console.log('Session configured');
+          console.log('✅ Session configured');
           break;
 
         case 'response.audio.delta':
           if (data.delta) {
+            console.log('🔊 Receiving audio chunk, length:', data.delta.length);
             // Decode base64 audio
             const audioData = Uint8Array.from(atob(data.delta), c => c.charCodeAt(0));
             const int16Array = new Int16Array(audioData.buffer);
             audioQueueRef.current.push(int16Array);
+            console.log('📊 Audio queue length:', audioQueueRef.current.length);
             processAudioQueue();
           }
           break;
 
         case 'response.audio.done':
-          console.log('Response complete');
+          console.log('✅ Response complete');
           break;
 
         case 'input_audio_buffer.speech_started':
           setConversationState('listening');
-          console.log('User started speaking');
+          console.log('🎤 User started speaking');
           break;
 
         case 'input_audio_buffer.speech_stopped':
           setConversationState('thinking');
-          console.log('User stopped speaking');
+          console.log('🤔 User stopped speaking');
+          break;
+          
+        case 'response.audio_transcript.delta':
+          console.log('📝 AI transcript:', data.delta);
+          break;
+          
+        case 'response.done':
+          console.log('✅ Full response done');
           break;
 
         case 'error':
-          console.error('Error from server:', data.error);
+          console.error('❌ Error from server:', data.error);
           break;
 
         default:
-          console.log('Received:', data.type);
+          console.log('📩 Received:', data.type);
       }
     } catch (error) {
-      console.error('Error parsing message:', error);
+      console.error('❌ Error parsing message:', error);
     }
   };
 
@@ -121,8 +137,19 @@ function App() {
       wsRef.current = ws;
 
       ws.onopen = () => {
-        console.log('Connected to server');
+        console.log('✅ Connected to server');
         setConnectionState('connected');
+        
+        // Wait a moment for session to be configured, then trigger first response
+        setTimeout(() => {
+          console.log('🚀 Requesting initial greeting from AI');
+          ws.send(JSON.stringify({
+            type: 'response.create',
+            response: {
+              modalities: ['text', 'audio']
+            }
+          }));
+        }, 1000);
         
         // Start sending audio
         startAudioStreaming(stream, ws);
