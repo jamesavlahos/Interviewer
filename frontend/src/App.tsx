@@ -11,7 +11,6 @@ function App() {
   const audioContextRef = useRef<AudioContext | null>(null);
   const audioQueueRef = useRef<Int16Array[]>([]);
   const isPlayingRef = useRef(false);
-  const nextPlayTimeRef = useRef(0);
 
   // Initialize audio context
   const initAudioContext = () => {
@@ -20,8 +19,8 @@ function App() {
     }
   };
 
-  // Play audio chunk with proper scheduling to avoid popping
-  const playAudioChunk = (audioData: Int16Array) => {
+  // Play audio chunk with crossfading to prevent clicks
+  const playAudioChunk = async (audioData: Int16Array) => {
     if (!audioContextRef.current) return;
 
     const audioContext = audioContextRef.current;
@@ -33,12 +32,12 @@ function App() {
       channelData[i] = audioData[i] / 32768.0;
     }
 
-    // Apply fade in/out to prevent clicks (5ms each)
-    const fadeLength = Math.floor(24000 * 0.005); // 5ms at 24kHz = 120 samples
+    // Apply fade in/out to prevent clicks (3ms each)
+    const fadeLength = Math.floor(24000 * 0.003); // 3ms at 24kHz = 72 samples
     for (let i = 0; i < fadeLength && i < audioData.length; i++) {
-      // Fade in
+      // Fade in at the start
       channelData[i] *= i / fadeLength;
-      // Fade out
+      // Fade out at the end
       const fadeOutIndex = audioData.length - 1 - i;
       if (fadeOutIndex >= 0 && fadeOutIndex < audioData.length) {
         channelData[fadeOutIndex] *= i / fadeLength;
@@ -48,52 +47,34 @@ function App() {
     const source = audioContext.createBufferSource();
     source.buffer = audioBuffer;
     source.connect(audioContext.destination);
+    source.start();
 
-    // Schedule playback to avoid gaps
-    const currentTime = audioContext.currentTime;
-    const startTime = Math.max(currentTime, nextPlayTimeRef.current);
-    
-    source.start(startTime);
-    
-    // Update next play time (buffer duration + small overlap to prevent gaps)
-    nextPlayTimeRef.current = startTime + audioBuffer.duration - 0.001; // 1ms overlap
+    // Wait for this chunk to finish before playing next
+    return new Promise<void>((resolve) => {
+      source.onended = () => resolve();
+    });
   };
 
-  // Process audio queue with proper scheduling
-  const processAudioQueue = () => {
-    if (!audioContextRef.current || audioQueueRef.current.length === 0) return;
-    
-    if (!isPlayingRef.current) {
-      console.log('🔊 Starting audio playback, queue size:', audioQueueRef.current.length);
-      isPlayingRef.current = true;
-      setConversationState('speaking');
-      
-      // Reset scheduling time
-      nextPlayTimeRef.current = audioContextRef.current.currentTime;
-    }
+  // Process audio queue sequentially
+  const processAudioQueue = async () => {
+    if (isPlayingRef.current || audioQueueRef.current.length === 0) return;
 
-    // Play all queued chunks
+    console.log('🔊 Starting audio playback, queue size:', audioQueueRef.current.length);
+    isPlayingRef.current = true;
+    setConversationState('speaking');
+
+    // Play chunks sequentially, waiting for each to finish
     while (audioQueueRef.current.length > 0) {
       const chunk = audioQueueRef.current.shift();
       if (chunk) {
-        console.log('🔉 Scheduling chunk, length:', chunk.length);
-        playAudioChunk(chunk);
+        console.log('🔉 Playing chunk, length:', chunk.length);
+        await playAudioChunk(chunk);
       }
     }
 
-    // Check when to stop (after all audio finishes)
-    const audioContext = audioContextRef.current;
-    const timeUntilDone = (nextPlayTimeRef.current - audioContext.currentTime) * 1000;
-    
-    if (timeUntilDone > 0) {
-      setTimeout(() => {
-        if (audioQueueRef.current.length === 0) {
-          console.log('✅ Audio playback complete');
-          isPlayingRef.current = false;
-          setConversationState('idle');
-        }
-      }, timeUntilDone + 100); // Add 100ms buffer
-    }
+    console.log('✅ Audio playback complete');
+    isPlayingRef.current = false;
+    setConversationState('idle');
   };
 
   // Handle WebSocket messages from backend
