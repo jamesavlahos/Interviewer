@@ -147,7 +147,7 @@ function App() {
       const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
 
       // Connect to backend WebSocket
-      const ws = new WebSocket('ws://localhost:8000/ws');
+      const ws = new WebSocket('wss://interviewer-production-48c3.up.railway.app/ws');
       wsRef.current = ws;
 
       ws.onopen = () => {
