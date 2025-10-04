@@ -112,12 +112,12 @@
 }
 
 .call-button.disconnected {
-  background: linear-gradient(135deg, #008080 0%, #006666 100%);
+  background: #BD1E51;
   color: white;
 }
 
 .call-button.disconnected:hover {
-  background: linear-gradient(135deg, #66b2b2 0%, #008080 100%);
+  background: #d4276b;
   transform: translateY(-2px);
   box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
 }
