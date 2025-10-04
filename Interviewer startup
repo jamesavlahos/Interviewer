@@ -1,0 +1,27 @@
+Every Time You Want to Run the App:
+You need exactly 2 terminals - one for backend, one for frontend.
+
+📋 Step-by-Step Startup Instructions
+Terminal 1: Backend Server
+# 1. Navigate to backend folder
+cd /Users/jamesvlahos/Desktop/Code/Interviewer/backend
+
+# 2. Activate Python virtual environment
+source venv/bin/activate
+
+# 3. Start the backend server
+python main.py
+
+✅ Success looks like:
+INFO:     Started server process [5936]
+INFO:     Waiting for application startup.
+INFO:     Application startup complete.
+INFO:     Uvicorn running on http://localhost:8000 (Press CTRL+C to quit)
+
+Terminal 2: Frontend Server
+Open a new terminal tab/window (Cmd+T or Cmd+N):
+# 1. Navigate to frontend folder
+cd /Users/jamesvlahos/Desktop/Code/Interviewer/frontend
+
+# 2. Start the development server
+npm run dev
