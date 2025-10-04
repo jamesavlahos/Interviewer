@@ -243,11 +243,7 @@ function App() {
         {/* Interviewer Avatar */}
         <div className={`avatar ${conversationState}`}>
           <div className="avatar-circle">
-            <svg viewBox="0 0 100 100" className="avatar-icon">
-              <circle cx="50" cy="35" r="15" fill="white" />
-              <path d="M 30 65 Q 50 50, 70 65" stroke="white" strokeWidth="3" fill="none" />
-              <circle cx="50" cy="50" r="40" stroke="white" strokeWidth="2" fill="none" />
-            </svg>
+            <img src="/interviewer-avatar-2.png" alt="Virtual Biographer Avatar" className="avatar-icon" />
           </div>
           <div className="pulse-ring"></div>
         </div>
