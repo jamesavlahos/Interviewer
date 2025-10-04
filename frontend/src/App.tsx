@@ -257,7 +257,7 @@ function App() {
 
         {/* Status Text */}
         <p className="status">
-          {connectionState === 'disconnected' && 'Ready to begin your interview'}
+          {connectionState === 'disconnected' && 'I want to get to know you!'}
           {connectionState === 'connecting' && 'Connecting...'}
           {connectionState === 'connected' && conversationState === 'idle' && 'Interview in progress'}
           {conversationState === 'listening' && 'Listening...'}
